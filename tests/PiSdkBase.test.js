@@ -1,4 +1,4 @@
-import PiSdkBase from '../pi_network_base.js';
+import PiSdkBase from '../PiSdkBase.js';
 
 describe('PiSdkBase', () => {
   test('should be a class with proper static properties', () => {

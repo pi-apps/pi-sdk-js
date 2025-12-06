@@ -1,2 +1,2 @@
-import PiSdkBase from './pi_network_base.js';
+import PiSdkBase from './PiSdkBase.js';
 export default PiSdkBase;
