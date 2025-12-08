@@ -65,12 +65,12 @@ export default class PiSdkBase {
   static error(...args) { console.error(this.logPrefix, ...args); }
 
   /**
-   * Initialize the PiSdkBase instance.
-   * Resets user and connected status.
+   * Initialize/reset this instance only.
+   * Does NOT modify static user or connected -- leaves connection/global state alone.
+   * Future: reset instance fields here.
    */
-  initializePiNetworkBase() {
-    this.user = null;
-    this.connected = false;
+  initializePiSdkBase() {
+    // (When instance fields are added, reset them here.)
   }
 
   /**

@@ -8,14 +8,6 @@ describe('PiSdkBase', () => {
     expect(PiSdkBase.connected).toBe(false);
   });
 
-  test('can initialize using instance method', () => {
-    const inst = new PiSdkBase();
-    inst.initializePiNetworkBase();
-    // Should reset user and connected
-    expect(PiSdkBase.user).toBeNull();
-    expect(PiSdkBase.connected).toBe(false);
-  });
-
   test('should log with logPrefix', () => {
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     PiSdkBase.log('hello');
