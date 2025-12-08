@@ -25,6 +25,39 @@ describe('PiSdkBase', () => {
     errorSpy.mockRestore();
   });
 
+  test('only one Pi.init and Pi.authenticate is called across multiple connects', async () => {
+    const originalWindow = global.window;
+    const originalPi = global.Pi;
+    const fakePi = {
+      init: jest.fn(),
+      authenticate: jest.fn().mockResolvedValue({ user: { name: 'demo' }, accessToken: 'tok' })
+    };
+    global.window = { Pi: fakePi };
+    global.Pi = fakePi;
+    // Reset static state
+    PiSdkBase.user = null;
+    PiSdkBase.connected = false;
+
+    // Clear mutex and spies
+    if (PiSdkBase.connectMutex && PiSdkBase.connectMutex.isLocked()) {
+      await PiSdkBase.connectMutex.release();
+    }
+
+    // Run .connect() three times in parallel
+    await Promise.all([
+      PiSdkBase.prototype.connect(),
+      PiSdkBase.prototype.connect(),
+      PiSdkBase.prototype.connect()
+    ]);
+
+    expect(fakePi.init).toHaveBeenCalledTimes(1);
+    expect(fakePi.authenticate).toHaveBeenCalledTimes(1);
+
+    // Clean up
+    global.window = originalWindow;
+    global.Pi = originalPi;
+  });
+
   // Example CJS require usage (documented, not run):
   // const PiSdkBase = require('../index.cjs');
   // ... use PiSdkBase as above ...

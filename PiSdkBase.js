@@ -7,6 +7,8 @@
  * - This class is intended to be mixed in or composed with framework-specific components (React, Stimulus, etc).
  * - Extend and/or override methods as needed.
  */
+import { Mutex } from 'async-mutex';
+
 export default class PiSdkBase {
   /**
    * Pi Network username object (shared across all instances)
@@ -37,6 +39,8 @@ export default class PiSdkBase {
    * @type {string}
    */
   static version = "2.0";
+
+  static connectMutex = new Mutex();
 
   constructor() {}
 
@@ -80,35 +84,44 @@ export default class PiSdkBase {
    * @returns {Promise<void>}
    */
   async connect() {
-    if (!window.Pi || typeof window.Pi.init !== "function") {
-      PiSdkBase.error("Pi SDK not loaded.");
-      return;
-    }
-    // Determine Pi.init options based on Rails env
-    let piInitOptions = { version: PiSdkBase.version };
-    const railsEnv = (window.RAILS_ENV || process.env?.RAILS_ENV || process.env?.NODE_ENV || "development");
-    if (railsEnv === "development" || railsEnv === "test") {
-      piInitOptions.sandbox = true;
-    }
-    Pi.init(piInitOptions);
-    PiSdkBase.log("SDK initialized", piInitOptions);
-    PiSdkBase.connected = false;
+    const release = await PiSdkBase.connectMutex.acquire();
     try {
-      const authResponse = await Pi.authenticate(
-        ["payments", "username"],
-        PiSdkBase.onIncompletePaymentFound
-      );
-      PiSdkBase.accessToken = authResponse.accessToken;
-      PiSdkBase.user = authResponse.user;
-      PiSdkBase.connected = true;
-      PiSdkBase.log("Auth OK", authResponse);
-      if (typeof this.onConnection == 'function') {
-        // This call is here because developer's Stimulus controller subclassed
-        this.onConnection();
+      if (PiSdkBase.connected && PiSdkBase.user) {
+        // Already connected, skip re-authentication
+        return;
       }
-    } catch (err) {
+      if (!window.Pi || typeof window.Pi.init !== "function") {
+        PiSdkBase.error("Pi SDK not loaded.");
+        return;
+      }
+      // Determine Pi.init options based on Rails env
+      let piInitOptions = { version: PiSdkBase.version };
+      const railsEnv = (window.RAILS_ENV || process.env?.RAILS_ENV || process.env?.NODE_ENV || "development");
+      if (railsEnv === "development" || railsEnv === "test") {
+        piInitOptions.sandbox = true;
+      }
+      Pi.init(piInitOptions);
+      PiSdkBase.log("SDK initialized", piInitOptions);
       PiSdkBase.connected = false;
-      PiSdkBase.error("Auth failed", err);
+      try {
+        const authResponse = await Pi.authenticate(
+          ["payments", "username"],
+          PiSdkBase.onIncompletePaymentFound
+        );
+        PiSdkBase.accessToken = authResponse.accessToken;
+        PiSdkBase.user = authResponse.user;
+        PiSdkBase.connected = true;
+        PiSdkBase.log("Auth OK", authResponse);
+        if (typeof this.onConnection == 'function') {
+          // This call is here because developer's Stimulus controller subclassed
+          this.onConnection();
+        }
+      } catch (err) {
+        PiSdkBase.connected = false;
+        PiSdkBase.error("Auth failed", err);
+      }
+    } finally {
+      release();
     }
   }
 
