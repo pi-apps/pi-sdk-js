@@ -17,13 +17,26 @@ yarn-debug.log*
 yarn-error.log*
 
 # Editor folders/files
-/.vscode
+**/.vscode
 .idea
 
 # test coverage
-/coverage
+**/coverage
 
 # swap files
 *.swp
 *.swo
+# Emacs temporary files
+*~
+\#*
+*.elc
 
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Editor folders/files
+**/.vscode
+.idea

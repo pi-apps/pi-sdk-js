@@ -96,8 +96,11 @@ export default class PiSdkBase {
       }
       // Determine Pi.init options based on Rails env
       let piInitOptions = { version: PiSdkBase.version };
-      const railsEnv = (window.RAILS_ENV || process.env?.RAILS_ENV || process.env?.NODE_ENV || "development");
-      if (railsEnv === "development" || railsEnv === "test") {
+      const backendEnv = (window.RAILS_ENV ||
+			  (typeof process !== 'undefined' && (
+			    process.env?.RAILS_ENV ||
+			      process.env?.NODE_ENV)) || "development");
+      if (backendEnv === "development" || backendEnv === "test") {
         piInitOptions.sandbox = true;
       }
       Pi.init(piInitOptions);
