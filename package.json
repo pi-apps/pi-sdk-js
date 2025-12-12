@@ -1,6 +1,6 @@
 {
   "name": "pi-sdk-js",
-  "version" = "2.0.0",
+  "version": "2.0.0",
   "description": "A JavaScript class for handling front-end protocol for Pi transactions",
   "keywords": [
     "pi",
