@@ -9,38 +9,63 @@
  */
 import { Mutex } from 'async-mutex';
 
+export interface PiUser {
+  name: string;
+  [key: string]: any;
+}
+
+export interface PaymentData {
+  amount: number;
+  memo: string;
+  metadata: Record<string, unknown>;
+}
+
+// TODO: Strongly type paymentDTO according to Pi SDK docs.
+
+declare global {
+  interface Window {
+    Pi: any;
+    RAILS_ENV?: string;
+  }
+  var Pi: any;
+}
+
 export default class PiSdkBase {
   /**
    * Pi Network username object (shared across all instances)
    * @type {object|null}
    */
-  static user = null;
+  static user : PiUser | null = null;
 
   /**
    * Connected status (shared across all instances)
    * @type {boolean}
    */
-  static connected = false;
+  static connected: boolean = false;
 
   /**
    * Default payment API path (can be overridden)
    * @type {string}
    */
-  static paymentBasePath = 'pi_payment';
+  static paymentBasePath: string = 'pi_payment';
 
   /**
    * Log prefix for all static logs
    * @type {string}
    */
-  static logPrefix = '[PiSDK]';
+  static logPrefix: string  = '[PiSDK]';
 
   /**
    * SDK version
    * @type {string}
    */
-  static version = "2.0";
+  static version: string = "2.0";
 
-  static connectMutex = new Mutex();
+  static connectMutex: Mutex = new Mutex();
+
+  static accessToken: string | null = null;
+
+  onConnection?: () => void;
 
   constructor() {}
 
@@ -48,32 +73,32 @@ export default class PiSdkBase {
    * Returns the current connection status
    * @returns {boolean}
    */
-  static get_connected() { return PiSdkBase.connected; }
+  static get_connected(): boolean { return PiSdkBase.connected; }
 
   /**
    * Returns the active user (if any)
    * @returns {object|null}
    */
-  static get_user()      { return PiSdkBase.user; }
+  static get_user(): PiUser | null { return PiSdkBase.user; }
 
   /**
    * Log info details (prefixed)
    * @param {...any} args
    */
-  static log(...args)   { console.log(this.logPrefix, ...args); }
+  static log(...args: unknown[]): void { console.log(this.logPrefix, ...args); }
 
   /**
    * Log error details (prefixed)
    * @param {...any} args
    */
-  static error(...args) { console.error(this.logPrefix, ...args); }
+  static error(...args: unknown[]): void { console.error(this.logPrefix, ...args); }
 
   /**
    * Initialize/reset this instance only.
    * Does NOT modify static user or connected -- leaves connection/global state alone.
    * Future: reset instance fields here.
    */
-  initializePiSdkBase() {
+  initializePiSdkBase(): void {
     // (When instance fields are added, reset them here.)
   }
 
@@ -83,23 +108,27 @@ export default class PiSdkBase {
    * @async
    * @returns {Promise<void>}
    */
-  async connect() {
+  async connect(): Promise<void> {
     const release = await PiSdkBase.connectMutex.acquire();
     try {
       if (PiSdkBase.connected && PiSdkBase.user) {
         // Already connected, skip re-authentication
+        if (typeof this.onConnection == 'function') {
+	  // Trigger post connection actions
+          this.onConnection();
+        }
         return;
       }
-      if (!window.Pi || typeof window.Pi.init !== "function") {
+      if (!window.Pi ||
+	  typeof window.Pi.init !== "function") {
         PiSdkBase.error("Pi SDK not loaded.");
         return;
       }
-      // Determine Pi.init options based on Rails env
-      let piInitOptions = { version: PiSdkBase.version };
+      // Fix type for this object:
+      let piInitOptions: { version: string; sandbox?: boolean } = { version: PiSdkBase.version };
       const backendEnv = (window.RAILS_ENV ||
-			  (typeof process !== 'undefined' && (
-			    process.env?.RAILS_ENV ||
-			      process.env?.NODE_ENV)) || "development");
+			  (typeof process !== 'undefined' && (process.env?.RAILS_ENV ||
+							      process.env?.NODE_ENV)) || "development");
       if (backendEnv === "development" || backendEnv === "test") {
         piInitOptions.sandbox = true;
       }
@@ -116,7 +145,6 @@ export default class PiSdkBase {
         PiSdkBase.connected = true;
         PiSdkBase.log("Auth OK", authResponse);
         if (typeof this.onConnection == 'function') {
-          // This call is here because developer's Stimulus controller subclassed
           this.onConnection();
         }
       } catch (err) {
@@ -128,7 +156,7 @@ export default class PiSdkBase {
     }
   }
 
-  static async postToServer(path, body) {
+  static async postToServer(path: string, body: object): Promise<any> {
     const base = this.paymentBasePath || PiSdkBase.paymentBasePath;
     const resp = await fetch(`${base}/${path}`, {
       method: "POST",
@@ -141,7 +169,8 @@ export default class PiSdkBase {
     return resp.json();
   }
 
-  static async onReadyForServerApproval(paymentId, accessToken) {
+  static async onReadyForServerApproval(paymentId: string,
+					accessToken: string): Promise<void> {
     if (!paymentId) {
       PiSdkBase.error("Approval: missing paymentId");
       return;
@@ -151,40 +180,47 @@ export default class PiSdkBase {
       return;
     }
     try {
-      const data = await PiSdkBase.postToServer("approve", { paymentId, accessToken });
+      const data = await PiSdkBase.postToServer("approve",
+						{ paymentId,
+						  accessToken});
       PiSdkBase.log("approve:", data);
     } catch(err) {
       PiSdkBase.error("approve error", err);
     }
   }
 
-  static async onReadyForServerCompletion(paymentId, transactionId) {
+  static async onReadyForServerCompletion(paymentId: string,
+					  transactionId: string) : Promise<void> {
     if (!paymentId || !transactionId) {
       PiSdkBase.error("Completion: missing ids");
       return;
     }
     try {
-      const data = await PiSdkBase.postToServer("complete", { paymentId, transactionId });
+      const data = await PiSdkBase.postToServer("complete",
+						{ paymentId,
+						  transactionId });
       PiSdkBase.log("complete:", data);
     } catch(err) {
       PiSdkBase.error("complete error", err);
     }
   }
 
-  static async onCancel(paymentId) {
+  static async onCancel(paymentId: string): Promise<void> {
     if (!paymentId) {
       PiSdkBase.error("Cancel: missing paymentId");
       return;
     }
     try {
-      const data = await PiSdkBase.postToServer("cancel", { paymentId });
+      const data = await PiSdkBase.postToServer("cancel",
+						{ paymentId });
       PiSdkBase.log("cancel:", data);
     } catch(err) {
       PiSdkBase.error("cancel error", err);
     }
   }
 
-  static async onError(error, paymentDTO) {
+  static async onError(error: string,
+		       paymentDTO: any): Promise<void> {
     const paymentId = paymentDTO?.identifier;
     if (!paymentId || !paymentDTO) {
       PiSdkBase.error("Error: missing ids", error, paymentDTO);
@@ -198,7 +234,7 @@ export default class PiSdkBase {
     }
   }
 
-  static async onIncompletePaymentFound(paymentDTO) {
+  static async onIncompletePaymentFound(paymentDTO: any) {
     const paymentId = paymentDTO?.identifier;
     const transactionId = paymentDTO?.transaction?.txid || null;
     if (!paymentId) {
@@ -220,7 +256,7 @@ export default class PiSdkBase {
    * @param {string} paymentData.memo - Payment memo.
    * @param {object} paymentData.metadata - Optional metadata.
    */
-  createPayment(paymentData) {
+  createPayment(paymentData: PaymentData): void {
     if (!PiSdkBase.connected) {
       PiSdkBase.error("Not connected to Pi.");
       return;
@@ -233,8 +269,9 @@ export default class PiSdkBase {
       return;
     }
 
-    const onReadyForServerApproval = (paymentId) => {
-      PiSdkBase.onReadyForServerApproval(paymentId, PiSdkBase.accessToken);
+    const onReadyForServerApproval = (paymentId: string) => {
+      PiSdkBase.onReadyForServerApproval(paymentId,
+      PiSdkBase.accessToken!);
     }
     Pi.createPayment(
       paymentData,
@@ -247,4 +284,8 @@ export default class PiSdkBase {
       }
     );
   }
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).PiSdkBase = PiSdkBase;
 }

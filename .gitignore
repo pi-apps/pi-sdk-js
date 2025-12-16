@@ -40,3 +40,9 @@ Thumbs.db
 # Editor folders/files
 **/.vscode
 .idea
+
+# Vim temporary
+*-E
+
+# Rails apps for integration testing are not needed in the repo
+rails/*_app

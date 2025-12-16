@@ -1,4 +1,4 @@
-import PiSdkBase from '../PiSdkBase.js';
+import PiSdkBase from '../PiSdkBase';
 
 describe('PiSdkBase', () => {
   test('should be a class with proper static properties', () => {
@@ -17,30 +17,27 @@ describe('PiSdkBase', () => {
 
   test('should handle missing Pi SDK in connect', async () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    // Ensure Pi is missing
-    delete global.window;
-    global.window = {};
+    // Ensure window.Pi is missing
+    delete (window as any).Pi;
     await PiSdkBase.prototype.connect();
     expect(errorSpy).toHaveBeenCalledWith('[PiSDK]', 'Pi SDK not loaded.');
     errorSpy.mockRestore();
   });
 
   test('only one Pi.init and Pi.authenticate is called across multiple connects', async () => {
-    const originalWindow = global.window;
-    const originalPi = global.Pi;
+    const originalPi = (window as any).Pi;
     const fakePi = {
       init: jest.fn(),
       authenticate: jest.fn().mockResolvedValue({ user: { name: 'demo' }, accessToken: 'tok' })
     };
-    global.window = { Pi: fakePi };
-    global.Pi = fakePi;
+    (window as any).Pi = fakePi;
     // Reset static state
     PiSdkBase.user = null;
     PiSdkBase.connected = false;
 
-    // Clear mutex and spies
-    if (PiSdkBase.connectMutex && PiSdkBase.connectMutex.isLocked()) {
-      await PiSdkBase.connectMutex.release();
+    // Clear mutex and spies if needed
+    if ((PiSdkBase as any).connectMutex && (PiSdkBase as any).connectMutex.isLocked()) {
+      await (PiSdkBase as any).connectMutex.release();
     }
 
     // Run .connect() three times in parallel
@@ -54,8 +51,11 @@ describe('PiSdkBase', () => {
     expect(fakePi.authenticate).toHaveBeenCalledTimes(1);
 
     // Clean up
-    global.window = originalWindow;
-    global.Pi = originalPi;
+    if (originalPi) {
+      (window as any).Pi = originalPi;
+    } else {
+      delete (window as any).Pi;
+    }
   });
 
   // Example CJS require usage (documented, not run):
