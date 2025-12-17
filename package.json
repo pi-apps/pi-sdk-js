@@ -27,11 +27,6 @@
         },
         "./PiSdkBase": "./dist/PiSdkBase.js"
     },
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
     "scripts": {
         "test": "jest",
         "build": "tsc && cp dist/index.js dist/index.cjs"
