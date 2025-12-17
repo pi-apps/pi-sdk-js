@@ -1,73 +1,110 @@
 # pi-sdk-js
 
-The **pi-sdk-js** package provides the core JavaScript SDK logic for Pi Network payment flows. It offers a framework-agnostic, reusable base class implementing the protocol and transaction lifecycle, so all frontends in the ecosystem (React, Stimulus, Vue, etc.) share consistent business logic and API interactions.
+A framework-agnostic JavaScript/TypeScript library for integrating Pi Network payment authentication and transaction flows in web applications.
 
-## Purpose
-- **Protocol abstraction:** Implements core Pi Network connect, authenticate, and payment workflows, using the Pi Browser SDK under the hood.
-- **Frontend-agnostic:** Can be used in any modern JavaScript frontend, either directly or as a dependency of a framework-specific package.
-- **Concurrency Safety:** Prevents concurrent/race condition issues during authentication with an internal mutex.
-- **Single source of truth:** Upgrades and bugfixes here flow through all frontend integrations.
+## Features
+- Protocol logic for Pi Network browser authentication and payment flows
+- Concurrency-safe connection/authentication (`async-mutex` guarded)
+- Framework-agnostic: use with React, Stimulus, or vanilla JS frontends
+- TypeScript types provided (PiUser, PaymentData)
+- Designed for integration in larger monorepos or as a standalone npm package
+- Used as the base for higher-level UI libraries and Rails integrations
 
-## Typical Usage
-You usually won't use this package directly; instead, you'll use a framework package (like `pi-sdk-react`) that relies on it.
+## Installation
 
-However, if you are integrating directly, simply inherit from, instantiate, or compose with the `PiSdkBase` class:
-
-```js
-import PiSdkBase from 'pi-sdk-js';
-
-const pi = new PiSdkBase();
-await pi.connect();
-await pi.createPayment({ amount: 1, memo: "Test", metadata: { example: true } });
+From npm:
+```sh
+npm install pi-sdk-js
+yarn add pi-sdk-js
 ```
 
-## Core API and Methods for Frontend Developers
-
-### Methods
-
-- **`async connect()`**
-  Connects/authenticates the user to Pi Network. Call upon mount or when the user initiates login.
-
-- **`async createPayment({ amount, memo, metadata, ... })`**
-  Begin a Pi payment. Call this with payment details when user clicks a "Pay"/"Buy" button.
-
-- **Lifecycle/Event hooks (overridable/bindable):**
-    - `onConnection(user, accessToken)` – Called after successful connection.
-    - `onReadyForServerApproval(paymentData)` – Called when ready for your server's payment approval (for UI spinner, etc).
-    - `onApproveSuccess(paymentResult)` – Called when the Pi payment is fully completed and approved.
-    - `onError(error)` – Called on errors during connect/payment flows.
-
-### Properties
-- **`connected`**: `boolean` — Whether the user is authenticated.
-- **`user`**: `object|null` — Authenticated user data, if available.
-
-### Events usage example
-```js
-const pi = new PiSdkBase();
-pi.onConnection = (user, accessToken) => {
-  // update UI, save session, etc.
-};
-pi.onError = (error) => {
-  alert(`Pi error: ${error}`);
-};
-await pi.connect();
+Monorepo/local package development:
+```sh
+yarn add file:../js-base
 ```
 
-## Summary Table
+## Usage Example
 
-| Method/Prop                 | Purpose                                      |
-|-----------------------------|----------------------------------------------|
-| `connect()`                 | Start login/authentication                   |
-| `createPayment()`           | Initiate payment flow                        |
-| `onConnection()`            | React to successful login                    |
-| `onReadyForServerApproval()`| Payment protocol: waiting for approval step  |
-| `onApproveSuccess()`        | After payment approved, user notified        |
-| `onError()`                 | Handle errors (UI, logging, retry, etc.)     |
-| `connected`                 | Is user authenticated? (buttons/UI)          |
-| `user`                      | Current Pi user info                         |
+### Basic Setup
+```ts
+import { PiSdkBase, PaymentData } from "pi-sdk-js";
 
-## Contributing
-All protocol logic should live here and be as side-effect-free and UI-agnostic as possible. Keep dependencies, especially UI, to a minimum—child packages handle framework-specific integration.
+const sdk = new PiSdkBase();
+sdk.onConnection = () => {
+  // Ready to enable buy buttons, fetch user info, etc
+};
+sdk.connect();
+
+function buy() {
+  const paymentData: PaymentData = {
+    amount: 0.01,
+    memo: "Demo product",
+    metadata: { description: "Demo", order_id: 1234 }
+  };
+  sdk.createPayment(paymentData);
+}
+```
+
+### In a React Component
+```tsx
+import { PiSdkBase, PaymentData } from "pi-sdk-js";
+import React, { useState, useEffect, useRef } from "react";
+
+export default function PiButton() {
+  const [connected, setConnected] = useState(false);
+  const sdkRef = useRef<PiSdkBase | null>(null);
+
+  useEffect(() => {
+    const sdk = new PiSdkBase();
+    sdk.onConnection = () => setConnected(true);
+    sdkRef.current = sdk;
+    sdk.connect();
+  }, []);
+
+  const buy = () => {
+    const paymentData: PaymentData = {
+      amount: 0.01,
+      memo: "React Demo",
+      metadata: { description: "Demo", order_id: Math.floor(10000 + Math.random() * 90000) }
+    };
+    sdkRef.current?.createPayment(paymentData);
+  };
+
+  return <button disabled={!connected} onClick={buy}>Buy</button>;
+}
+```
+
+## API
+
+### `class PiSdkBase`
+- `.connect()` - Initiate connection and authentication. Handles concurrency via async-mutex.
+- `.onConnection` - Optional callback for connection success.
+- `.createPayment(paymentData)` - Initiate a Pi payment with required details.
+- Static methods for checking connection and user state: `.get_connected()`, `.get_user()`
+- See TypeScript declarations for all methods and type details.
+
+### `PaymentData`
+TypeScript interface for payment details:
+```ts
+interface PaymentData {
+  amount: number;
+  memo: string;
+  metadata: Record<string, any>;
+}
+```
+
+## Building & Publishing
+
+Build (in monorepo):
+```sh
+yarn build
+```
+
+- Only the `dist/` directory is published as part of this package.
+- Tests and test utilities are excluded from the distribution.
 
 ## License
-This package is available as open source under the terms of the [PiOS License]. See `LICENSE` for details.
+SEE LICENCE IN LICENSE
+
+## Author
+John Kolen
