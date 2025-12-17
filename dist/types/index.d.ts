@@ -1,2 +1,1 @@
-import PiSdkBase from './PiSdkBase';
-export default PiSdkBase;
+export * from './PiSdkBase.js';

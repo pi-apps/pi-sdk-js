@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * PiSdkBase
  *
@@ -9,8 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * - This class is intended to be mixed in or composed with framework-specific components (React, Stimulus, etc).
  * - Extend and/or override methods as needed.
  */
-const async_mutex_1 = require("async-mutex");
-class PiSdkBase {
+import { Mutex } from 'async-mutex';
+export class PiSdkBase {
     constructor() { }
     /**
      * Returns the current connection status
@@ -51,15 +49,22 @@ class PiSdkBase {
         try {
             if (PiSdkBase.connected && PiSdkBase.user) {
                 // Already connected, skip re-authentication
+                if (typeof this.onConnection == 'function') {
+                    // Trigger post connection actions
+                    this.onConnection();
+                }
                 return;
             }
-            if (!window.Pi || typeof window.Pi.init !== "function") {
+            if (!window.Pi ||
+                typeof window.Pi.init !== "function") {
                 PiSdkBase.error("Pi SDK not loaded.");
                 return;
             }
             // Fix type for this object:
             let piInitOptions = { version: PiSdkBase.version };
-            const backendEnv = (window.RAILS_ENV || (typeof process !== 'undefined' && (process.env?.RAILS_ENV || process.env?.NODE_ENV)) || "development");
+            const backendEnv = (window.RAILS_ENV ||
+                (typeof process !== 'undefined' && (process.env?.RAILS_ENV ||
+                    process.env?.NODE_ENV)) || "development");
             if (backendEnv === "development" || backendEnv === "test") {
                 piInitOptions.sandbox = true;
             }
@@ -227,9 +232,8 @@ PiSdkBase.logPrefix = '[PiSDK]';
  * @type {string}
  */
 PiSdkBase.version = "2.0";
-PiSdkBase.connectMutex = new async_mutex_1.Mutex();
+PiSdkBase.connectMutex = new Mutex();
 PiSdkBase.accessToken = null;
-exports.default = PiSdkBase;
 if (typeof window !== 'undefined') {
     window.PiSdkBase = PiSdkBase;
 }

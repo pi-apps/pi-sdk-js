@@ -24,7 +24,7 @@ declare global {
     }
     var Pi: any;
 }
-export default class PiSdkBase {
+export declare class PiSdkBase {
     /**
      * Pi Network username object (shared across all instances)
      * @type {object|null}
