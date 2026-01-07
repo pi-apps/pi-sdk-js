@@ -1,110 +1,84 @@
-# pi-sdk-js
+# Pi Network JS SDK – User Guide
 
-A framework-agnostic JavaScript/TypeScript library for integrating Pi Network payment authentication and transaction flows in web applications.
+This package provides a fully-typed, modern ES module interface to the Pi Network protocol for browser or web-app integrations. It is intended for developers building applications that use the Pi browser extension or the `window.Pi` global API, and wish to use TypeScript or class-based control.
 
-## Features
-- Protocol logic for Pi Network browser authentication and payment flows
-- Concurrency-safe connection/authentication (`async-mutex` guarded)
-- Framework-agnostic: use with React, Stimulus, or vanilla JS frontends
-- TypeScript types provided (PiUser, PaymentData)
-- Designed for integration in larger monorepos or as a standalone npm package
-- Used as the base for higher-level UI libraries and Rails integrations
+---
 
-## Installation
+## 🚀 Quick Start
 
-From npm:
-```sh
-npm install pi-sdk-js
+1. **Install with yarn or npm**
+   ```sh
 yarn add pi-sdk-js
-```
+   # or
+npm install pi-sdk-js
+   ```
+2. **Ensure the global Pi SDK (`window.Pi`) is available in your HTML**
+   ```html
+   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+   ```
+3. **Import and use the SDK in your project:**
 
-Monorepo/local package development:
-```sh
-yarn add file:../js-base
-```
+   ```ts
+   import { PiSdkBase, PiUser, PaymentData } from 'pi-sdk-js';
 
-## Usage Example
+   const pi = new PiSdkBase();
+   await pi.connect();
+   // Now PiSdkBase.user is available (or listen for onConnection)
+   pi.createPayment({ amount: 1, memo: "Demo", metadata: { productId: 42 } });
+   ```
 
-### Basic Setup
-```ts
-import { PiSdkBase, PaymentData } from "pi-sdk-js";
+---
 
-const sdk = new PiSdkBase();
-sdk.onConnection = () => {
-  // Ready to enable buy buttons, fetch user info, etc
-};
-sdk.connect();
+## 📦 API Overview
 
-function buy() {
-  const paymentData: PaymentData = {
-    amount: 0.01,
-    memo: "Demo product",
-    metadata: { description: "Demo", order_id: 1234 }
-  };
-  sdk.createPayment(paymentData);
-}
-```
+### Classes and Types
 
-### In a React Component
-```tsx
-import { PiSdkBase, PaymentData } from "pi-sdk-js";
-import React, { useState, useEffect, useRef } from "react";
+#### **`PiSdkBase` (Class)**  
+Core interface to Pi Network via the browser SDK. Example usage:
+- **`connect()`** – Initiates authentication and session handshake. Should be called on user intent (or mount).
+- **`createPayment(paymentData)`** – Begins a payment operation. All server callbacks are handled automatically via Pi's callback protocol.
+- **Static helpers**:
+  - `PiSdkBase.user: PiUser | null` – Current user after `.connect()`
+  - `PiSdkBase.connected: boolean` – Is SDK authenticated/connected?
+  - `PiSdkBase.accessToken: string | null` – Latest session or payment JWT
 
-export default function PiButton() {
-  const [connected, setConnected] = useState(false);
-  const sdkRef = useRef<PiSdkBase | null>(null);
+#### **`PiUser` (Type)**  
+Represents an authenticated Pi user, at minimum `{ name: string, ... }`.
 
-  useEffect(() => {
-    const sdk = new PiSdkBase();
-    sdk.onConnection = () => setConnected(true);
-    sdkRef.current = sdk;
-    sdk.connect();
-  }, []);
-
-  const buy = () => {
-    const paymentData: PaymentData = {
-      amount: 0.01,
-      memo: "React Demo",
-      metadata: { description: "Demo", order_id: Math.floor(10000 + Math.random() * 90000) }
-    };
-    sdkRef.current?.createPayment(paymentData);
-  };
-
-  return <button disabled={!connected} onClick={buy}>Buy</button>;
-}
-```
-
-## API
-
-### `class PiSdkBase`
-- `.connect()` - Initiate connection and authentication. Handles concurrency via async-mutex.
-- `.onConnection` - Optional callback for connection success.
-- `.createPayment(paymentData)` - Initiate a Pi payment with required details.
-- Static methods for checking connection and user state: `.get_connected()`, `.get_user()`
-- See TypeScript declarations for all methods and type details.
-
-### `PaymentData`
-TypeScript interface for payment details:
+#### **`PaymentData` (Type)**
 ```ts
 interface PaymentData {
   amount: number;
   memo: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 ```
+---
 
-## Building & Publishing
+## 🔑 Key Details
+- **ESM Only**: Use `import { ... } from 'pi-sdk-js'`; no CommonJS support.
+- **Depends on the global `window.Pi`**: The SDK does NOT bundle or polyfill the Pi Network global; you must include the Pi SDK `<script>` yourself.
+- **Callbacks & Events**: Payment lifecycle events (approve, complete, cancel, error, incomplete) are managed via static methods—override or listen as needed.
+- **No React dependency.**
 
-Build (in monorepo):
-```sh
-yarn build
-```
+---
 
-- Only the `dist/` directory is published as part of this package.
-- Tests and test utilities are excluded from the distribution.
+## ❓ FAQ
 
-## License
-SEE LICENCE IN LICENSE
+### How do I mock `window.Pi` for testing/development?
+Assign a stub to `window.Pi` with mock methods (see your test runner for examples). No real payments or network calls will be made.
 
-## Author
-John Kolen
+### What is required to run in Node.js?
+This package is **intended for browsers**; headless use requires you to polyfill `window` and `window.Pi`.
+
+### Where are user roles or advanced Pi features?
+See the complete API in source. Most advanced features are mapped, but basics are exposed as above for typical dApps.
+
+---
+
+## 📚 Further Resources
+- [Official Pi SDK Docs](https://developer.minepi.com/)
+- [Pi SDK JavaScript API Reference](https://developer.minepi.com/sdk/reference)
+
+For advanced integration patterns, see the [pi-sdk-react](https://github.com/pi-apps/pi-sdk-react) package or your framework's best practices.
+
