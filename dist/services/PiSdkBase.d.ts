@@ -12,6 +12,8 @@ declare global {
     interface Window {
         Pi: any;
         RAILS_ENV?: string;
+        __NEXT_DATA__: any;
+        next: any;
     }
     var Pi: any;
 }
@@ -29,6 +31,7 @@ export declare class PiSdkBase {
     static get_user(): PiUser | null;
     static log(...args: unknown[]): void;
     static error(...args: unknown[]): void;
+    static checkPaymentBasePath(): void;
     initializePiSdkBase(): void;
     connect(): Promise<void>;
     static postToServer(path: string, body: object): Promise<any>;

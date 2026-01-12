@@ -1,6 +1,18 @@
-# Pi Network JS SDK – User Guide
+# Pi Network JS SDK – Community Developer Guide
 
-This package provides a fully-typed, modern ES module interface to the Pi Network protocol for browser or web-app integrations. It is intended for developers building applications that use the Pi browser extension or the `window.Pi` global API, and wish to use TypeScript or class-based control.
+This package provides a fully-typed, modern ES module interface to the
+Pi Network protocol for browser or web-app integrations. It is
+intended for developers building applications that use the Pi browser
+extension or the `window.Pi` global API, and wish to use TypeScript or
+class-based control.
+It is part of the "Ten Minutes to Transactions" effort described in this
+[video](https://www.youtube.com/watch?v=cIFqf1Z5pRM&t=35s).
+
+** This package only contains the front end interface for initiating and
+completing Pi transations. It does not include back end support and
+will not operate without it. ** Use one of the back end packages such as
+[pi-sdk-nextjs](https://github.com/pi-apps/pi-sdk-nextjs) or
+[pi-sdk-rails](https://github.com/pi-apps/pi-sdk-rails).
 
 ---
 
@@ -33,7 +45,7 @@ npm install pi-sdk-js
 
 ### Classes and Types
 
-#### **`PiSdkBase` (Class)**  
+#### **`PiSdkBase` (Class)**
 Core interface to Pi Network via the browser SDK. Example usage:
 - **`connect()`** – Initiates authentication and session handshake. Should be called on user intent (or mount).
 - **`createPayment(paymentData)`** – Begins a payment operation. All server callbacks are handled automatically via Pi's callback protocol.
@@ -42,7 +54,7 @@ Core interface to Pi Network via the browser SDK. Example usage:
   - `PiSdkBase.connected: boolean` – Is SDK authenticated/connected?
   - `PiSdkBase.accessToken: string | null` – Latest session or payment JWT
 
-#### **`PiUser` (Type)**  
+#### **`PiUser` (Type)**
 Represents an authenticated Pi user, at minimum `{ name: string, ... }`.
 
 #### **`PaymentData` (Type)**
@@ -80,5 +92,6 @@ See the complete API in source. Most advanced features are mapped, but basics ar
 - [Official Pi SDK Docs](https://developer.minepi.com/)
 - [Pi SDK JavaScript API Reference](https://developer.minepi.com/sdk/reference)
 
-For advanced integration patterns, see the [pi-sdk-react](https://github.com/pi-apps/pi-sdk-react) package or your framework's best practices.
-
+For advanced integration patterns, see the
+[pi-sdk-react](https://github.com/pi-apps/pi-sdk-react) package or
+your framework's best practices.
