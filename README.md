@@ -8,9 +8,9 @@ class-based control.
 It is part of the "Ten Minutes to Transactions" effort described in this
 [video](https://www.youtube.com/watch?v=cIFqf1Z5pRM&t=35s).
 
-** This package only contains the front end interface for initiating and
+**This package only contains the front end interface for initiating and
 completing Pi transations. It does not include back end support and
-will not operate without it. ** Use one of the back end packages such as
+will not operate without it.** Use one of the back end packages such as
 [pi-sdk-nextjs](https://github.com/pi-apps/pi-sdk-nextjs) or
 [pi-sdk-rails](https://github.com/pi-apps/pi-sdk-rails).
 
@@ -20,9 +20,9 @@ will not operate without it. ** Use one of the back end packages such as
 
 1. **Install with yarn or npm**
    ```sh
-yarn add pi-sdk-js
+   yarn add pi-sdk-js
    # or
-npm install pi-sdk-js
+   npm install pi-sdk-js
    ```
 2. **Ensure the global Pi SDK (`window.Pi`) is available in your HTML**
    ```html
@@ -38,6 +38,9 @@ npm install pi-sdk-js
    // Now PiSdkBase.user is available (or listen for onConnection)
    pi.createPayment({ amount: 1, memo: "Demo", metadata: { productId: 42 } });
    ```
+
+3. **Provide back end transaction support in your app:**
+   as described in the [Official Pi SDK Docs](https://developer.minepi.com/).
 
 ---
 

@@ -16,8 +16,11 @@
     "type": "git",
     "url": "git+https://github.com/pi-apps/pi-sdk-js.git"
   },
-  "license": "SEE LICENCE IN LICENSE",
+  "license": "LicenseRef-PiOS",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "exports": {
     ".": {
