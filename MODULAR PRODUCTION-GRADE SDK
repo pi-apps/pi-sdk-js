@@ -1,0 +1,33 @@
+STRUKTUR FINAL (PRODUCTION SDK)
+
+pi-sdk-js-pro/
+├─ src/
+│  ├─ core/
+│  │  ├─ config.ts
+│  │  ├─ event-bus.ts
+│  │  ├─ payment-engine.ts
+│  │
+│  ├─ auth/
+│  │  └─ connect.ts
+│  │
+│  ├─ payment/
+│  │  └─ create-payment.ts
+│  │
+│  ├─ marketplace/
+│  │  └─ merchant.ts
+│  │
+│  ├─ plugins/
+│  │  └─ plugin.ts
+│  │
+│  ├─ audit/
+│  │  └─ audit-log.ts
+│  │
+│  ├─ types/
+│  │  └─ index.ts
+│  │
+│  ├─ sdk.ts
+│  └─ index.ts
+│
+├─ package.json
+├─ tsconfig.json
+└─ README.md
